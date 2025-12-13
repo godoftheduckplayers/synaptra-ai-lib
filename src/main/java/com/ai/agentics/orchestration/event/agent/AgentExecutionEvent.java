@@ -43,29 +43,23 @@ public class AgentExecutionEvent {
 
   @Async
   @EventListener
-  public void callAgentExecutionEvent(AgentRequestEvent agentRequestEvent) {
+  public void callAgentExecutionEvent(AgentRequestEvent agentRequestEvent)
+      throws JsonProcessingException {
     Span span = tracer.spanBuilder("call-openai").startSpan();
     logAgentExecutionRequest(agentRequestEvent, span);
-    try {
-      ChatCompletionRequest chatCompletionRequest = agentRequestEvent.toChatCompletionRequest();
-      logChatCompletionRequest(agentRequestEvent, chatCompletionRequest, span);
+    ChatCompletionRequest chatCompletionRequest = agentRequestEvent.toChatCompletionRequest();
+    logChatCompletionRequest(agentRequestEvent, chatCompletionRequest, span);
 
-      ChatCompletionResponse chatCompletionResponse =
-          openAIClient.call(agentRequestEvent.sessionId(), chatCompletionRequest);
-      logChatCompletionResponse(agentRequestEvent, chatCompletionResponse, span);
+    ChatCompletionResponse chatCompletionResponse =
+        openAIClient.call(agentRequestEvent.sessionId(), chatCompletionRequest);
+    logChatCompletionResponse(agentRequestEvent, chatCompletionResponse, span);
 
-      publisher.publishEvent(
-          new AgentResponseEvent(
-              agentRequestEvent.sessionId(),
-              agentRequestEvent.agent(),
-              agentRequestEvent.user(),
-              chatCompletionResponse));
-    } catch (JsonProcessingException e) {
-      logCallOpenAIError(agentRequestEvent, e, span);
-      throw new RuntimeException(e);
-    } finally {
-      span.end();
-    }
+    publisher.publishEvent(
+        new AgentResponseEvent(
+            agentRequestEvent.sessionId(),
+            agentRequestEvent.agent(),
+            agentRequestEvent.user(),
+            chatCompletionResponse));
   }
 
   @Async
@@ -114,17 +108,5 @@ public class AgentExecutionEvent {
         agentRequestEvent.agent().identifier(),
         chatCompletionRequestJson);
     span.setAttribute("openai-request", chatCompletionRequestJson);
-  }
-
-  private void logCallOpenAIError(
-      AgentRequestEvent agentRequestEvent, JsonProcessingException e, Span span) {
-    assert agentRequestEvent.agent() != null;
-    logger.error(
-        "[OPENAI] - sessionId: {}, agent: {}, error: {}",
-        agentRequestEvent.sessionId(),
-        agentRequestEvent.agent().identifier(),
-        e.getMessage(),
-        e);
-    span.setAttribute("openai-error", e.getMessage());
   }
 }

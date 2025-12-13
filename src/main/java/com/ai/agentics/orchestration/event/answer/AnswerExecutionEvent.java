@@ -22,6 +22,12 @@ public class AnswerExecutionEvent {
   @Async
   @EventListener
   public void onAnswerExecutionEvent(AnswerResponseEvent answerResponseEvent) {
+    assert answerResponseEvent.agent() != null;
+    logger.debug(
+        "[ANSWER_EXECUTION_EVENT] - sessionId: {}, agent: {}, answer: {}",
+        answerResponseEvent.sessionId(),
+        answerResponseEvent.agent().identifier(),
+        answerResponseEvent.response());
     answerExecutionListenerList.forEach(
         listener -> listener.onAnswerExecutionResponseEvent(answerResponseEvent));
   }
