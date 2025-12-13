@@ -1,9 +1,8 @@
-package com.ai.agentics.execution.event.tool;
+package com.ai.agentics.orchestration.event.answer.contract;
 
 import com.ai.agentics.client.openai.data.ChatCompletionResponse;
 import com.ai.agentics.client.openai.data.Message;
-import com.ai.agentics.client.openai.data.ToolCall;
-import com.ai.agentics.execution.data.Agent;
+import com.ai.agentics.model.Agent;
 import org.springframework.lang.Nullable;
 
 /**
@@ -45,5 +44,5 @@ import org.springframework.lang.Nullable;
  * @author Leandro Marques
  * @since 1.0.0
  */
-public record ToolExecutionResponseEvent(
-    String sessionId, @Nullable Agent agent, @Nullable Message user, ToolCall toolCall) {}
+public record AnswerResponseEvent(
+    String sessionId, @Nullable Agent agent, @Nullable Message user, String response) {}

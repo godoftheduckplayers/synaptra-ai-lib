@@ -1,8 +1,8 @@
-package com.ai.agentics.execution;
+package com.ai.agentics.orchestration;
 
-import com.ai.agentics.execution.event.agent.AgentExecutionResponseEvent;
-import com.ai.agentics.execution.event.response.AnswerExecutionResponseEvent;
-import com.ai.agentics.execution.event.tool.ToolExecutionResponseEvent;
+import com.ai.agentics.orchestration.event.agent.contract.AgentResponseEvent;
+import com.ai.agentics.orchestration.event.answer.contract.AnswerResponseEvent;
+import com.ai.agentics.orchestration.event.tool.contract.ToolResponseEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -20,8 +20,8 @@ public class OrchestrationExecutionService {
   @Async
   @EventListener
   public void onAgentExecutionEvent(
-      AgentExecutionResponseEvent agentExecutionResponseEventMessageEvent) {
-    agentExecutionResponseEventMessageEvent
+      AgentResponseEvent agentResponseEventMessageEvent) {
+    agentResponseEventMessageEvent
         .chatCompletionResponse()
         .choices()
         .forEach(
@@ -29,10 +29,10 @@ public class OrchestrationExecutionService {
               String content = choice.message().content();
               if (content != null && !content.isEmpty()) {
                 publisher.publishEvent(
-                    new AnswerExecutionResponseEvent(
-                        agentExecutionResponseEventMessageEvent.sessionId(),
-                        agentExecutionResponseEventMessageEvent.agent(),
-                        agentExecutionResponseEventMessageEvent.user(),
+                    new AnswerResponseEvent(
+                        agentResponseEventMessageEvent.sessionId(),
+                        agentResponseEventMessageEvent.agent(),
+                        agentResponseEventMessageEvent.user(),
                         content));
               }
               if ("tool_calls".equals(choice.finishReason())) {
@@ -42,10 +42,10 @@ public class OrchestrationExecutionService {
                     .forEach(
                         toolCall ->
                             publisher.publishEvent(
-                                new ToolExecutionResponseEvent(
-                                    agentExecutionResponseEventMessageEvent.sessionId(),
-                                    agentExecutionResponseEventMessageEvent.agent(),
-                                    agentExecutionResponseEventMessageEvent.user(),
+                                new ToolResponseEvent(
+                                    agentResponseEventMessageEvent.sessionId(),
+                                    agentResponseEventMessageEvent.agent(),
+                                    agentResponseEventMessageEvent.user(),
                                     toolCall)));
                 System.out.println(choice);
               }

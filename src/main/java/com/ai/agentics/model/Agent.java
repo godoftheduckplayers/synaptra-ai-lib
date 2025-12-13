@@ -1,7 +1,9 @@
-package com.ai.agentics.execution.data;
+package com.ai.agentics.model;
 
 import com.ai.agentics.client.openai.data.Tool;
 import com.ai.agentics.client.openai.data.ToolChoice;
+import com.ai.agentics.model.config.ProviderConfig;
+
 import java.util.List;
 
 /**
