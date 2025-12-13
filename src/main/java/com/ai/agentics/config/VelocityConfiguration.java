@@ -1,4 +1,4 @@
-package com.ai.agentics.model.config;
+package com.ai.agentics.config;
 
 import java.util.Properties;
 import org.apache.velocity.app.VelocityEngine;
@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class VelocityConfig {
+public class VelocityConfiguration {
 
   @Bean
   public VelocityEngine velocityEngine() {
