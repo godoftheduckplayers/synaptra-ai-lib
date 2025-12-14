@@ -9,11 +9,13 @@ import com.ai.agentics.velocity.VelocityTemplateService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
-public class HandoffContextMessage {
+public class HandoffContextPublisher {
 
+  private final ApplicationEventPublisher publisher;
   private final VelocityTemplateService velocityTemplateService;
   private final ObjectMapper mapper;
 
@@ -26,12 +28,18 @@ public class HandoffContextMessage {
      - Do not assume missing data.
     """;
 
-  public HandoffContextMessage(VelocityTemplateService velocityTemplateService) {
+  public HandoffContextPublisher(
+      ApplicationEventPublisher publisher, VelocityTemplateService velocityTemplateService) {
+    this.publisher = publisher;
     this.velocityTemplateService = velocityTemplateService;
     this.mapper = new ObjectMapper();
   }
 
-  public AgentRequestEvent handoffContext(ToolResponseEvent toolResponseEvent) {
+  public void publishEvent(ToolResponseEvent toolResponseEvent) {
+    publisher.publishEvent(buildAgentRequestEvent(toolResponseEvent));
+  }
+
+  private AgentRequestEvent buildAgentRequestEvent(ToolResponseEvent toolResponseEvent) {
     try {
       RouteMapper routeMapper =
           mapper.readValue(toolResponseEvent.toolCall().function().arguments(), RouteMapper.class);
