@@ -19,7 +19,7 @@ public class AnswerExecutionEvent {
     this.answerExecutionListenerList = answerExecutionListenerList;
   }
 
-  @Async
+  @Async("agentExecutionExecutor")
   @EventListener
   public void onAnswerExecutionEvent(AnswerResponseEvent answerResponseEvent) {
     assert answerResponseEvent.agent() != null;

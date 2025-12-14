@@ -29,7 +29,7 @@ public class RecordExecutionEvent {
     this.mapper = new ObjectMapper();
   }
 
-  @Async
+  @Async("agentExecutionExecutor")
   @EventListener
   public void onRecordExecutionEvent(RecordRequestEvent recordRequestEvent)
       throws JsonProcessingException {

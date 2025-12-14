@@ -45,7 +45,7 @@ public class AgentExecutionEvent {
     this.mapper = new ObjectMapper();
   }
 
-  @Async
+  @Async("agentExecutionExecutor")
   @EventListener
   public void callAgentExecutionEvent(AgentRequestEvent agentRequestEvent)
       throws JsonProcessingException {
@@ -67,7 +67,7 @@ public class AgentExecutionEvent {
             chatCompletionResponse));
   }
 
-  @Async
+  @Async("agentExecutionExecutor")
   @EventListener
   public void onAgentExecutionEvent(AgentResponseEvent agentResponseEvent) {
     assert agentResponseEvent.agent() != null;

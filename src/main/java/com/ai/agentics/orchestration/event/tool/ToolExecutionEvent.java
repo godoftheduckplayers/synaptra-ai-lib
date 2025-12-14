@@ -35,7 +35,7 @@ public class ToolExecutionEvent {
     this.mapper = new ObjectMapper();
   }
 
-  @Async
+  @Async("agentExecutionExecutor")
   @EventListener
   public void onToolExecutionEvent(ToolResponseEvent toolResponseEvent)
       throws JsonProcessingException {

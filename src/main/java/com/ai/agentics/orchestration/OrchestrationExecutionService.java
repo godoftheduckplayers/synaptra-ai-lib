@@ -18,7 +18,7 @@ public class OrchestrationExecutionService {
 
   private final ApplicationEventPublisher publisher;
 
-  @Async
+  @Async("agentExecutionExecutor")
   @EventListener
   public void onAgentExecutionEvent(AgentResponseEvent agentResponseEventMessageEvent) {
     agentResponseEventMessageEvent
