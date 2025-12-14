@@ -4,6 +4,7 @@ import com.ai.agentics.client.openai.data.FunctionDef;
 import com.ai.agentics.client.openai.data.Parameter;
 import com.ai.agentics.client.openai.data.ParameterProperty;
 import com.ai.agentics.client.openai.data.Tool;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,9 +13,12 @@ public abstract class BaseAgent implements Agent {
 
   @Override
   public List<Tool> tools() {
-    Tool routeToAgentTool = routeToAgentFunction();
-    Tool stageTool = stageTool();
-    return List.of(routeToAgentTool, stageTool);
+    List<Tool> tools = new ArrayList<>();
+    if (agents() != null && !agents().isEmpty()) {
+      tools.add(routeToAgentFunction());
+    }
+    tools.add(stageTool());
+    return tools;
   }
 
   public Map<String, Object> velocityContext() {
