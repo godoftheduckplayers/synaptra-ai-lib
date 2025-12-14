@@ -2,7 +2,6 @@ package com.ai.agentics.model;
 
 import com.ai.agentics.client.openai.data.Tool;
 import com.ai.agentics.client.openai.data.ToolChoice;
-import com.ai.agentics.model.config.ProviderConfig;
 
 import java.util.List;
 
@@ -45,6 +44,12 @@ public interface Agent {
    */
   String identifier();
 
+  String name();
+
+  String goal();
+
+  AgentType agentType();
+
   /**
    * Returns the configuration of the AI provider used by this agent.
    *
@@ -74,6 +79,8 @@ public interface Agent {
    * @return the list of tools available to the agent
    */
   List<Tool> tools();
+
+  List<Agent> agents();
 
   /**
    * Defines how the model should choose and invoke tools during execution.

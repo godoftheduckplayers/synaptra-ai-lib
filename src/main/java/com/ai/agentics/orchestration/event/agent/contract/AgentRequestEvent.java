@@ -3,6 +3,7 @@ package com.ai.agentics.orchestration.event.agent.contract;
 import com.ai.agentics.client.openai.data.ChatCompletionRequest;
 import com.ai.agentics.client.openai.data.Message;
 import com.ai.agentics.model.Agent;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.lang.Nullable;
 
@@ -45,7 +46,7 @@ import org.springframework.lang.Nullable;
  * @since 1.0.0
  */
 public record AgentRequestEvent(
-    String sessionId, @Nullable Agent agent, @Nullable Message user) {
+    String sessionId, @Nullable Agent agent, @Nullable Message system, @Nullable Message user) {
 
   /**
    * Converts this execution event into a {@link ChatCompletionRequest}.
@@ -77,10 +78,15 @@ public record AgentRequestEvent(
   public ChatCompletionRequest toChatCompletionRequest() {
     assert agent != null;
     assert user != null;
-
+    List<Message> messageList = new ArrayList<>();
+    if (system != null) {
+      messageList.add(system);
+    }
+    messageList.add(new Message("system", agent.prompt(), null, null, null));
+    messageList.add(user);
     return new ChatCompletionRequest(
         agent.providerConfig().model(),
-        List.of(new Message("system", agent.prompt(), null, null, null), user),
+        messageList,
         agent.tools(),
         agent.toolChoice().getValue(),
         agent.providerConfig().temperature(),
