@@ -3,6 +3,7 @@ package com.ai.agentics.agent;
 import com.ai.agentics.client.openai.data.Tool;
 import com.ai.agentics.client.openai.data.ToolChoice;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Defines the contract for an executable AI agent within the Agentics execution framework.
@@ -90,4 +91,6 @@ public interface Agent {
    * @return the tool selection strategy for this agent
    */
   ToolChoice toolChoice();
+
+  Map<String, Object> velocityContext();
 }

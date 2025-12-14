@@ -6,6 +6,7 @@ import com.ai.agentics.client.openai.data.ChatCompletionResponse;
 import com.ai.agentics.orchestration.event.agent.contract.AgentRequestEvent;
 import com.ai.agentics.orchestration.event.agent.contract.AgentResponseEvent;
 import com.ai.agentics.tracer.AIAgenticTracer;
+import com.ai.agentics.velocity.VelocityTemplateService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.api.trace.Span;
@@ -28,16 +29,19 @@ public class AgentExecutionEvent {
   private final ObjectMapper mapper;
   private final ApplicationEventPublisher publisher;
   private final List<AgentExecutionListener> agentExecutionListenerList;
+  private final VelocityTemplateService velocityTemplateService;
 
   public AgentExecutionEvent(
       AIAgenticTracer AIAgenticTracer,
       OpenAIClient openAIClient,
       ApplicationEventPublisher publisher,
-      List<AgentExecutionListener> agentExecutionListenerList) {
+      List<AgentExecutionListener> agentExecutionListenerList,
+      VelocityTemplateService velocityTemplateService) {
     this.tracer = AIAgenticTracer.getTracer();
     this.openAIClient = openAIClient;
     this.publisher = publisher;
     this.agentExecutionListenerList = agentExecutionListenerList;
+    this.velocityTemplateService = velocityTemplateService;
     this.mapper = new ObjectMapper();
   }
 
@@ -47,7 +51,8 @@ public class AgentExecutionEvent {
       throws JsonProcessingException {
     Span span = tracer.spanBuilder("call-openai").startSpan();
     logAgentExecutionRequest(agentRequestEvent, span);
-    ChatCompletionRequest chatCompletionRequest = agentRequestEvent.toChatCompletionRequest();
+    ChatCompletionRequest chatCompletionRequest =
+        agentRequestEvent.toChatCompletionRequest(velocityTemplateService);
     logChatCompletionRequest(agentRequestEvent, chatCompletionRequest, span);
 
     ChatCompletionResponse chatCompletionResponse =

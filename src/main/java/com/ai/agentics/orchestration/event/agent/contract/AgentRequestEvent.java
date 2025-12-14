@@ -3,6 +3,7 @@ package com.ai.agentics.orchestration.event.agent.contract;
 import com.ai.agentics.agent.Agent;
 import com.ai.agentics.client.openai.data.ChatCompletionRequest;
 import com.ai.agentics.client.openai.data.Message;
+import com.ai.agentics.velocity.VelocityTemplateService;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.lang.Nullable;
@@ -83,11 +84,18 @@ public record AgentRequestEvent(
    *
    * @return a fully constructed {@link ChatCompletionRequest} ready for execution
    */
-  public ChatCompletionRequest toChatCompletionRequest() {
+  public ChatCompletionRequest toChatCompletionRequest(
+      VelocityTemplateService velocityTemplateService) {
     assert agent != null;
     assert user != null;
     List<Message> messageList = new ArrayList<>();
-    messageList.add(new Message("system", agent.prompt(), null, null, null));
+    messageList.add(
+        new Message(
+            "system",
+            velocityTemplateService.render(agent.prompt(), agent.velocityContext()),
+            null,
+            null,
+            null));
     if (handoffContext != null) {
       messageList.add(handoffContext);
     }
