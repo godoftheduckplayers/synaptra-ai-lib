@@ -12,6 +12,20 @@ public abstract class BaseAgent implements Agent {
 
   @Override
   public List<Tool> tools() {
+    Tool routeToAgentTool = routeToAgentFunction();
+    Tool stageTool = stageTool();
+    return List.of(routeToAgentTool, stageTool);
+  }
+
+  public Map<String, Object> velocityContext() {
+    Map<String, Object> context = new HashMap<>();
+    context.put("name", name());
+    context.put("goal", goal());
+    context.put("agents", agents());
+    return context;
+  }
+
+  private Tool routeToAgentFunction() {
     Parameter parameter = new Parameter();
     parameter.addProperty(
         "agent",
@@ -33,19 +47,53 @@ public abstract class BaseAgent implements Agent {
             "This field contains the user-provided data or contextual information that the target agent will process in order to fulfill the objective."),
         true);
 
-    FunctionDef functionDef =
+    FunctionDef routeToAgentFunction =
         new FunctionDef(
             "route_to_agent",
             "Select, from the available options, the agent that best fulfills the user’s request. One of the provided agents (parameters) must be chosen to execute the task.",
             parameter);
-    return List.of(new Tool("function", functionDef));
+
+    return new Tool("function", routeToAgentFunction);
   }
 
-  public Map<String, Object> velocityContext() {
-    Map<String, Object> context = new HashMap<>();
-    context.put("name", name());
-    context.put("goal", goal());
-    context.put("agents", agents());
-    return context;
+  private Tool stageTool() {
+    Parameter parameter = new Parameter();
+    parameter.addProperty(
+        "status",
+        new ParameterProperty(
+            "string",
+            """
+                      This field must contain one of the following values: WAIT_USER_INPUT or FINISHED.
+                      Each value should be used as follows:
+
+                      - WAIT_USER_INPUT: when the agent asks the user for additional information in order to continue
+                        the process.
+                      - FINISHED: when the agent determines that it has completed the requested task.
+                      """),
+        true);
+
+    parameter.addProperty(
+        "content",
+        new ParameterProperty(
+            "string",
+            """
+                      This field must have its value determined by the current status. When the status is:
+
+                      - WAIT_USER_INPUT: the value must contain the question(s) that will be presented to the user.
+                      - FINISHED: the value must contain a summary of what was performed.
+                      """),
+        true);
+
+    FunctionDef stageFunction =
+        new FunctionDef(
+            "record_event",
+            """
+                      Indicates the current execution state of the session. Possible values are:
+                      WAIT_USER_INPUT and FINISHED. This state is used by the orchestrator to determine
+                      the next execution step.
+                      """,
+            parameter);
+
+    return new Tool("function", stageFunction);
   }
 }
