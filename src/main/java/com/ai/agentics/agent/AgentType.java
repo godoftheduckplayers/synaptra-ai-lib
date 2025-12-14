@@ -1,4 +1,4 @@
-package com.ai.agentics.model;
+package com.ai.agentics.agent;
 
 public enum AgentType {
   AGENT,

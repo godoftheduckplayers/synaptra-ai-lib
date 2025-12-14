@@ -1,14 +1,10 @@
 package com.ai.agentics.orchestration.event.tool;
 
-import com.ai.agentics.client.openai.data.Message;
-import com.ai.agentics.model.Agent;
-import com.ai.agentics.orchestration.event.agent.contract.AgentRequestEvent;
-import com.ai.agentics.orchestration.event.tool.contract.RouteMapper;
 import com.ai.agentics.orchestration.event.tool.contract.ToolResponseEvent;
+import com.ai.agentics.prompt.HandoffContextMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -20,13 +16,18 @@ import org.springframework.stereotype.Service;
 public class ToolExecutionEvent {
 
   private static final Logger logger = LoggerFactory.getLogger(ToolExecutionEvent.class);
+  private static final String ROUTE_TO_AGENT = "route_to_agent";
 
+  private final HandoffContextMessage handoffContextMessage;
   private final ApplicationEventPublisher publisher;
   private final List<ToolExecutionListener> toolExecutionListenerList;
   private final ObjectMapper mapper;
 
   public ToolExecutionEvent(
-      ApplicationEventPublisher publisher, List<ToolExecutionListener> toolExecutionListenerList) {
+      HandoffContextMessage handoffContextMessage,
+      ApplicationEventPublisher publisher,
+      List<ToolExecutionListener> toolExecutionListenerList) {
+    this.handoffContextMessage = handoffContextMessage;
     this.publisher = publisher;
     this.toolExecutionListenerList = toolExecutionListenerList;
     this.mapper = new ObjectMapper();
@@ -47,35 +48,9 @@ public class ToolExecutionEvent {
         listener -> listener.onToolExecutionResponseEvent(toolResponseEvent));
   }
 
-  private void publishRouteEvent(ToolResponseEvent toolResponseEvent)
-      throws JsonProcessingException {
-    if ("route_to_agent".equals(toolResponseEvent.toolCall().function().name())) {
-      RouteMapper routeMapper =
-          mapper.readValue(toolResponseEvent.toolCall().function().arguments(), RouteMapper.class);
-      publisher.publishEvent(
-          new AgentRequestEvent(
-              toolResponseEvent.sessionId(),
-              getAgent(routeMapper, toolResponseEvent),
-              new Message(
-                  "system",
-                  "The user input is: "
-                      + routeMapper.input()
-                      + ", your objective is: "
-                      + routeMapper.objective(),
-                  null,
-                  null,
-                  null),
-              toolResponseEvent.user()));
+  private void publishRouteEvent(ToolResponseEvent toolResponseEvent) {
+    if (ROUTE_TO_AGENT.equals(toolResponseEvent.toolCall().function().name())) {
+      publisher.publishEvent(handoffContextMessage.handoffContext(toolResponseEvent));
     }
-  }
-
-  private Agent getAgent(RouteMapper routeMapper, ToolResponseEvent toolResponseEvent) {
-    assert toolResponseEvent.agent() != null;
-    Optional<Agent> agent =
-        toolResponseEvent.agent().agents().stream()
-            .filter(a -> a.name().equals(routeMapper.agent()))
-            .findFirst();
-    return agent.orElseThrow(
-        () -> new RuntimeException("Failed to execute agent: " + routeMapper.agent()));
   }
 }

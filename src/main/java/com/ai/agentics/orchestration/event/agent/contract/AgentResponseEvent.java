@@ -1,8 +1,8 @@
 package com.ai.agentics.orchestration.event.agent.contract;
 
+import com.ai.agentics.agent.Agent;
 import com.ai.agentics.client.openai.data.ChatCompletionResponse;
 import com.ai.agentics.client.openai.data.Message;
-import com.ai.agentics.model.Agent;
 import org.springframework.lang.Nullable;
 
 /**
@@ -45,7 +45,7 @@ import org.springframework.lang.Nullable;
  * @since 1.0.0
  */
 public record AgentResponseEvent(
-        String sessionId,
+    String sessionId,
     @Nullable Agent agent,
     @Nullable Message user,
     ChatCompletionResponse chatCompletionResponse) {}

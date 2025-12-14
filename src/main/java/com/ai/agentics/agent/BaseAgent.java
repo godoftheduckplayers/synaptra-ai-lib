@@ -1,10 +1,12 @@
-package com.ai.agentics.model;
+package com.ai.agentics.agent;
 
 import com.ai.agentics.client.openai.data.FunctionDef;
 import com.ai.agentics.client.openai.data.Parameter;
 import com.ai.agentics.client.openai.data.ParameterProperty;
 import com.ai.agentics.client.openai.data.Tool;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class BaseAgent implements Agent {
 
@@ -37,5 +39,13 @@ public abstract class BaseAgent implements Agent {
             "Select, from the available options, the agent that best fulfills the user’s request. One of the provided agents (parameters) must be chosen to execute the task.",
             parameter);
     return List.of(new Tool("function", functionDef));
+  }
+
+  public Map<String, Object> velocityContext() {
+    Map<String, Object> context = new HashMap<>();
+    context.put("name", name());
+    context.put("goal", goal());
+    context.put("agents", agents());
+    return context;
   }
 }

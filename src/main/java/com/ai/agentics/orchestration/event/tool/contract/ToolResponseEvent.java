@@ -1,9 +1,9 @@
 package com.ai.agentics.orchestration.event.tool.contract;
 
+import com.ai.agentics.agent.Agent;
 import com.ai.agentics.client.openai.data.ChatCompletionResponse;
 import com.ai.agentics.client.openai.data.Message;
 import com.ai.agentics.client.openai.data.ToolCall;
-import com.ai.agentics.model.Agent;
 import org.springframework.lang.Nullable;
 
 /**

@@ -1,4 +1,4 @@
-package com.ai.agentics.model;
+package com.ai.agentics.agent;
 
 /**
  * Defines the configuration parameters for an AI model provider execution.

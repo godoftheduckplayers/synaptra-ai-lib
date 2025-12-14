@@ -1,8 +1,8 @@
 package com.ai.agentics.orchestration.event.agent.contract;
 
+import com.ai.agentics.agent.Agent;
 import com.ai.agentics.client.openai.data.ChatCompletionRequest;
 import com.ai.agentics.client.openai.data.Message;
-import com.ai.agentics.model.Agent;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.lang.Nullable;
@@ -46,7 +46,15 @@ import org.springframework.lang.Nullable;
  * @since 1.0.0
  */
 public record AgentRequestEvent(
-    String sessionId, @Nullable Agent agent, @Nullable Message system, @Nullable Message user) {
+    String sessionId,
+    @Nullable Agent agent,
+    @Nullable Message handoffContext,
+    @Nullable Message episodicContext,
+    @Nullable Message user) {
+
+  public AgentRequestEvent(String sessionId, Agent agent, Message handoffContext, Message user) {
+    this(sessionId, agent, handoffContext, null, user);
+  }
 
   /**
    * Converts this execution event into a {@link ChatCompletionRequest}.
@@ -55,7 +63,7 @@ public record AgentRequestEvent(
    *
    * <ul>
    *   <li>The agent's provider configuration
-   *   <li>The agent's base prompt as a system message
+   *   <li>The agent's base prompt as a handoffRouteAction message
    *   <li>The user message as the conversation input
    *   <li>The agent's available tools
    *   <li>The agent's tool selection strategy
@@ -79,10 +87,13 @@ public record AgentRequestEvent(
     assert agent != null;
     assert user != null;
     List<Message> messageList = new ArrayList<>();
-    if (system != null) {
-      messageList.add(system);
-    }
     messageList.add(new Message("system", agent.prompt(), null, null, null));
+    if (handoffContext != null) {
+      messageList.add(handoffContext);
+    }
+    if (episodicContext != null) {
+      messageList.add(episodicContext);
+    }
     messageList.add(user);
     return new ChatCompletionRequest(
         agent.providerConfig().model(),
