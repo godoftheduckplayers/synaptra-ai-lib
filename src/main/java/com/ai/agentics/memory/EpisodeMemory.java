@@ -19,6 +19,11 @@ public class EpisodeMemory {
     agentEvents.add(recordEvent);
   }
 
+  public List<RecordEvent> getEpisodeMemory(String sessionId, Agent agent) {
+    Map<String, List<RecordEvent>> events = getEvents(sessionId);
+    return getAgentEvents(agent, events);
+  }
+
   private List<RecordEvent> getAgentEvents(Agent agent, Map<String, List<RecordEvent>> events) {
     List<RecordEvent> recordEvents;
     if (events.containsKey(agent.identifier())) {

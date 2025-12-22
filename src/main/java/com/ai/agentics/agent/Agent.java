@@ -80,6 +80,10 @@ public interface Agent {
    */
   List<Tool> tools();
 
+  Agent parent();
+
+  void setParent(Agent agent);
+
   List<Agent> agents();
 
   /**

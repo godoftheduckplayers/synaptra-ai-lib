@@ -11,6 +11,8 @@ import java.util.Map;
 
 public abstract class BaseAgent implements Agent {
 
+  private Agent parent;
+
   @Override
   public List<Tool> tools() {
     List<Tool> tools = new ArrayList<>();
@@ -99,5 +101,15 @@ public abstract class BaseAgent implements Agent {
             parameter);
 
     return new Tool("function", stageFunction);
+  }
+
+  @Override
+  public Agent parent() {
+    return parent;
+  }
+
+  @Override
+  public void setParent(Agent parent) {
+    this.parent = parent;
   }
 }

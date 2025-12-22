@@ -1,9 +1,13 @@
 package com.ai.agentics.prompt;
 
+import static com.ai.agentics.orchestration.event.record.RecordExecutionEvent.WAIT_AGENT_EXECUTION;
+
 import com.ai.agentics.agent.Agent;
 import com.ai.agentics.client.openai.data.Message;
+import com.ai.agentics.memory.EpisodeMemory;
 import com.ai.agentics.orchestration.event.agent.contract.AgentRequestEvent;
 import com.ai.agentics.orchestration.event.tool.contract.ToolResponseEvent;
+import com.ai.agentics.prompt.contract.RecordEvent;
 import com.ai.agentics.prompt.contract.RouteMapper;
 import com.ai.agentics.velocity.VelocityTemplateService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,6 +21,7 @@ public class HandoffContextPublisher {
 
   private final ApplicationEventPublisher publisher;
   private final VelocityTemplateService velocityTemplateService;
+  private final EpisodeMemory episodeMemory;
   private final ObjectMapper mapper;
 
   private static final String BASE_PROMPT =
@@ -29,9 +34,12 @@ public class HandoffContextPublisher {
     """;
 
   public HandoffContextPublisher(
-      ApplicationEventPublisher publisher, VelocityTemplateService velocityTemplateService) {
+      ApplicationEventPublisher publisher,
+      VelocityTemplateService velocityTemplateService,
+      EpisodeMemory episodeMemory) {
     this.publisher = publisher;
     this.velocityTemplateService = velocityTemplateService;
+    this.episodeMemory = episodeMemory;
     this.mapper = new ObjectMapper();
   }
 
@@ -44,9 +52,16 @@ public class HandoffContextPublisher {
       RouteMapper routeMapper =
           mapper.readValue(toolResponseEvent.toolCall().function().arguments(), RouteMapper.class);
 
+      Agent agent = getAgent(routeMapper, toolResponseEvent);
+
+      episodeMemory.registerEvent(
+          toolResponseEvent.sessionId(),
+          toolResponseEvent.agent(),
+          new RecordEvent("Waiting for agent execution: " + agent.name(), WAIT_AGENT_EXECUTION));
+
       return new AgentRequestEvent(
           toolResponseEvent.sessionId(),
-          getAgent(routeMapper, toolResponseEvent),
+          agent,
           new Message(
               "system",
               velocityTemplateService.render(BASE_PROMPT, routeMapper.velocityContext()),
