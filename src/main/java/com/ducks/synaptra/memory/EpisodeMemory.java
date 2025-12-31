@@ -1,6 +1,7 @@
 package com.ducks.synaptra.memory;
 
 import com.ducks.synaptra.agent.Agent;
+import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.prompt.contract.RecordEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,12 +14,14 @@ public class EpisodeMemory {
 
   private static final Map<String, Map<String, List<RecordEvent>>> MEMORY = new HashMap<>();
 
+  @LogTracer(spanName = "register_memory_event")
   public void registerEvent(String sessionId, Agent agent, RecordEvent recordEvent) {
     Map<String, List<RecordEvent>> events = getEvents(sessionId);
     List<RecordEvent> agentEvents = getAgentEvents(agent, events);
     agentEvents.add(recordEvent);
   }
 
+  @LogTracer(spanName = "get_memory_event")
   public List<RecordEvent> getEpisodeMemory(String sessionId, Agent agent) {
     Map<String, List<RecordEvent>> events = getEvents(sessionId);
     return getAgentEvents(agent, events);

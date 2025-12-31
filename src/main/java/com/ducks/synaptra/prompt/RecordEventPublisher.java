@@ -1,5 +1,6 @@
 package com.ducks.synaptra.prompt;
 
+import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.orchestration.event.record.contract.RecordRequestEvent;
 import com.ducks.synaptra.orchestration.event.tool.contract.ToolResponseEvent;
 import com.ducks.synaptra.prompt.contract.RecordEvent;
@@ -19,8 +20,14 @@ public class RecordEventPublisher {
     this.mapper = new ObjectMapper();
   }
 
+  @LogTracer(spanName = "record_tool_response_event")
   public void publishEvent(ToolResponseEvent toolResponseEvent) {
     publisher.publishEvent(buildRecordEvent(toolResponseEvent));
+  }
+
+  @LogTracer(spanName = "record_publisher_event")
+  public void publishEvent(RecordRequestEvent recordRequestEvent) {
+    publisher.publishEvent(recordRequestEvent);
   }
 
   private RecordRequestEvent buildRecordEvent(ToolResponseEvent toolResponseEvent) {

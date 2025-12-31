@@ -1,8 +1,12 @@
 package com.ducks.synaptra.orchestration.event.tool;
 
+import com.ducks.synaptra.log.LogTracer;
+import com.ducks.synaptra.orchestration.event.record.RecordExecutionEvent;
+import com.ducks.synaptra.orchestration.event.record.contract.RecordRequestEvent;
 import com.ducks.synaptra.orchestration.event.tool.contract.ToolResponseEvent;
 import com.ducks.synaptra.prompt.HandoffContextPublisher;
 import com.ducks.synaptra.prompt.RecordEventPublisher;
+import com.ducks.synaptra.prompt.contract.RecordEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -35,6 +39,7 @@ public class ToolExecutionEvent {
     this.mapper = new ObjectMapper();
   }
 
+  @LogTracer(spanName = "tool_response_event")
   @Async("agentExecutionExecutor")
   @EventListener
   public void onToolExecutionEvent(ToolResponseEvent toolResponseEvent)
@@ -45,18 +50,30 @@ public class ToolExecutionEvent {
         toolResponseEvent.sessionId(),
         toolResponseEvent.agent().identifier(),
         mapper.writeValueAsString(toolResponseEvent.toolCall()));
-    publishRouteEvent(toolResponseEvent);
-    toolExecutionListenerList.forEach(
-        listener -> listener.onToolExecutionResponseEvent(toolResponseEvent));
+    String toolName = toolResponseEvent.toolCall().function().name();
+    publishRouteEvent(toolName, toolResponseEvent);
+    toolExecutionListenerList.stream()
+        .filter(tool -> !isInternalFunction(toolName))
+        .forEach(listener -> listener.onToolExecutionResponseEvent(toolResponseEvent));
   }
 
-  private void publishRouteEvent(ToolResponseEvent toolResponseEvent) {
-    String toolName = toolResponseEvent.toolCall().function().name();
+  private void publishRouteEvent(String toolName, ToolResponseEvent toolResponseEvent) {
     if (ROUTE_TO_AGENT.equals(toolName)) {
       handoffContextPublisher.publishEvent(toolResponseEvent);
-    }
-    if (RECORD_EVENT.equals(toolName)) {
+    } else if (RECORD_EVENT.equals(toolName)) {
       recordEventPublisher.publishEvent(toolResponseEvent);
+    } else {
+      recordEventPublisher.publishEvent(
+          new RecordRequestEvent(
+              toolResponseEvent.sessionId(),
+              toolResponseEvent.agent(),
+              toolResponseEvent.user(),
+              new RecordEvent(
+                  "Waiting for the tool execution.", RecordExecutionEvent.WAIT_TOOL_EXECUTION)));
     }
+  }
+
+  public boolean isInternalFunction(String toolName) {
+    return ROUTE_TO_AGENT.equals(toolName) || RECORD_EVENT.equals(toolName);
   }
 }

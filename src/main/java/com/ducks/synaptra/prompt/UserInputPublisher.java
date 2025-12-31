@@ -2,6 +2,7 @@ package com.ducks.synaptra.prompt;
 
 import com.ducks.synaptra.agent.Agent;
 import com.ducks.synaptra.client.openai.data.Message;
+import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.memory.EpisodeMemory;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentRequestEvent;
 import com.ducks.synaptra.prompt.contract.RecordEvent;
@@ -22,6 +23,7 @@ public class UserInputPublisher {
   private final VelocityTemplateService velocityTemplateService;
   private final ApplicationEventPublisher publisher;
 
+  @LogTracer(spanName = "user_input_publisher")
   public void publishEvent(String sessionId, Agent agent, String userInput) {
     publisher.publishEvent(buildAgentRequestEvent(sessionId, agent, userInput));
   }

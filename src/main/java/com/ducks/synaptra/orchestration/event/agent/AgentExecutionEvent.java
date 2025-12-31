@@ -3,9 +3,9 @@ package com.ducks.synaptra.orchestration.event.agent;
 import com.ducks.synaptra.client.openai.OpenAIClient;
 import com.ducks.synaptra.client.openai.data.ChatCompletionRequest;
 import com.ducks.synaptra.client.openai.data.ChatCompletionResponse;
+import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentRequestEvent;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentResponseEvent;
-import com.ducks.synaptra.tracer.AIAgenticTracer;
 import com.ducks.synaptra.velocity.VelocityTemplateService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,12 +32,12 @@ public class AgentExecutionEvent {
   private final VelocityTemplateService velocityTemplateService;
 
   public AgentExecutionEvent(
-      AIAgenticTracer AIAgenticTracer,
+      Tracer tracer,
       OpenAIClient openAIClient,
       ApplicationEventPublisher publisher,
       List<AgentExecutionListener> agentExecutionListenerList,
       VelocityTemplateService velocityTemplateService) {
-    this.tracer = AIAgenticTracer.getTracer();
+    this.tracer = tracer;
     this.openAIClient = openAIClient;
     this.publisher = publisher;
     this.agentExecutionListenerList = agentExecutionListenerList;
@@ -45,6 +45,7 @@ public class AgentExecutionEvent {
     this.mapper = new ObjectMapper();
   }
 
+  @LogTracer(spanName = "agent_request_event")
   @Async("agentExecutionExecutor")
   @EventListener
   public void callAgentExecutionEvent(AgentRequestEvent agentRequestEvent)
@@ -67,6 +68,7 @@ public class AgentExecutionEvent {
             chatCompletionResponse));
   }
 
+  @LogTracer(spanName = "agent_response_event")
   @Async("agentExecutionExecutor")
   @EventListener
   public void onAgentExecutionEvent(AgentResponseEvent agentResponseEvent) {

@@ -4,6 +4,7 @@ import static com.ducks.synaptra.orchestration.event.record.RecordExecutionEvent
 
 import com.ducks.synaptra.agent.Agent;
 import com.ducks.synaptra.client.openai.data.Message;
+import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.memory.EpisodeMemory;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentRequestEvent;
 import com.ducks.synaptra.orchestration.event.tool.contract.ToolResponseEvent;
@@ -43,6 +44,7 @@ public class HandoffContextPublisher {
     this.mapper = new ObjectMapper();
   }
 
+  @LogTracer(spanName = "call_agent_by_tool_response")
   public void publishEvent(ToolResponseEvent toolResponseEvent) {
     publisher.publishEvent(buildAgentRequestEvent(toolResponseEvent));
   }

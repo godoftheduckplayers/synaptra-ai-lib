@@ -1,5 +1,6 @@
 package com.ducks.synaptra.orchestration.event.answer;
 
+import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.orchestration.event.answer.contract.AnswerResponseEvent;
 import java.util.List;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ public class AnswerExecutionEvent {
     this.answerExecutionListenerList = answerExecutionListenerList;
   }
 
+  @LogTracer(spanName = "answer_response_event")
   @Async("agentExecutionExecutor")
   @EventListener
   public void onAnswerExecutionEvent(AnswerResponseEvent answerResponseEvent) {

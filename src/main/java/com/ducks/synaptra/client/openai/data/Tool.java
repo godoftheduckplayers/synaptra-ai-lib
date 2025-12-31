@@ -9,4 +9,9 @@ package com.ducks.synaptra.client.openai.data;
  * @author Leandro Marques
  * @since 1.0.0
  */
-public record Tool(String type, FunctionDef function) {}
+public record Tool(String type, FunctionDef function) {
+
+  public Tool(FunctionDef function) {
+    this("function", function);
+  }
+}

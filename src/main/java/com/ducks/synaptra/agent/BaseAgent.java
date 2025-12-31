@@ -59,7 +59,7 @@ public abstract class BaseAgent implements Agent {
             "Select, from the available options, the agent that best fulfills the user’s request. One of the provided agents (parameters) must be chosen to execute the task.",
             parameter);
 
-    return new Tool("function", routeToAgentFunction);
+    return new Tool(routeToAgentFunction);
   }
 
   private Tool stageTool() {
@@ -100,7 +100,7 @@ public abstract class BaseAgent implements Agent {
                       """,
             parameter);
 
-    return new Tool("function", stageFunction);
+    return new Tool(stageFunction);
   }
 
   @Override

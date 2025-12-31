@@ -1,6 +1,7 @@
 package com.ducks.synaptra.orchestration;
 
 import com.ducks.synaptra.client.openai.data.Choice;
+import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentResponseEvent;
 import com.ducks.synaptra.orchestration.event.answer.contract.AnswerResponseEvent;
 import com.ducks.synaptra.orchestration.event.tool.contract.ToolResponseEvent;
@@ -18,6 +19,7 @@ public class OrchestrationExecutionService {
 
   private final ApplicationEventPublisher publisher;
 
+  @LogTracer(spanName = "process_agent_response_event")
   @Async("agentExecutionExecutor")
   @EventListener
   public void onAgentExecutionEvent(AgentResponseEvent agentResponseEventMessageEvent) {

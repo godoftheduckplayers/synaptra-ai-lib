@@ -1,5 +1,8 @@
 package com.ducks.synaptra.client.openai.data;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+
 /**
  * Describes a property definition for a function parameter used in the OpenAI Function-Calling
  * interface.
@@ -14,4 +17,10 @@ package com.ducks.synaptra.client.openai.data;
  * @author Leandro Marques
  * @since 1.0.0
  */
-public record ParameterProperty(String type, String description) {}
+public record ParameterProperty(
+    String type, String description, @JsonProperty("enum") List<String> enumType) {
+
+  public ParameterProperty(String type, String description) {
+    this(type, description, List.of());
+  }
+}

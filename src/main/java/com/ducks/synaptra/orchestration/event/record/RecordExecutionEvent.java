@@ -1,6 +1,7 @@
 package com.ducks.synaptra.orchestration.event.record;
 
 import com.ducks.synaptra.client.openai.data.Message;
+import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.memory.EpisodeMemory;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentRequestEvent;
 import com.ducks.synaptra.orchestration.event.answer.contract.AnswerResponseEvent;
@@ -27,6 +28,8 @@ public class RecordExecutionEvent {
   public static final String WAIT_USER_INPUT = "WAIT_USER_INPUT";
   public static final String FINISHED = "FINISHED";
   public static final String WAIT_AGENT_EXECUTION = "WAIT_AGENT_EXECUTION";
+  public static final String WAIT_TOOL_EXECUTION = "WAIT_TOOL_EXECUTION";
+  public static final String FINISHED_TOOL_EXECUTION = "FINISHED_TOOL_EXECUTION";
 
   private final ApplicationEventPublisher publisher;
   private final EpisodeMemory episodeMemory;
@@ -43,6 +46,7 @@ public class RecordExecutionEvent {
     this.mapper = new ObjectMapper();
   }
 
+  @LogTracer(spanName = "record_response_event")
   @Async("agentExecutionExecutor")
   @EventListener
   public void onRecordExecutionEvent(RecordRequestEvent recordRequestEvent)
@@ -111,6 +115,15 @@ public class RecordExecutionEvent {
       } else {
         publisher.publishEvent(getAnswerResponseEvent(recordRequestEvent));
       }
+    }
+    if (FINISHED_TOOL_EXECUTION.equals(recordRequestEvent.recordEvent().status())) {
+      publisher.publishEvent(
+          new AgentRequestEvent(
+              recordRequestEvent.sessionId(),
+              recordRequestEvent.agent().parent(),
+              new Message("system", recordRequestEvent.recordEvent().content(), null, null, null),
+              null,
+              recordRequestEvent.user()));
     }
   }
 
