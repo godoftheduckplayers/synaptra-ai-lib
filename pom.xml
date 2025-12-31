@@ -1,28 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- ====================================================================== -->
+    <!-- Maven Model Version -->
+    <!-- ====================================================================== -->
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- ====================================================================== -->
+    <!-- Project Coordinates -->
+    <!-- ====================================================================== -->
     <groupId>com.ducks.synaptra</groupId>
     <artifactId>synaptra-ai-lib</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>Agentics AI Library</name>
-    <description>Spring Boot library for building AI agents with tracing and logging support</description>
+    <!-- ====================================================================== -->
+    <!-- Project Information -->
+    <!-- ====================================================================== -->
+    <name>synaptra-ai-lib</name>
+    <description>
+        Core Agentics library for building AI agents, orchestration, routing,
+        episodic memory, and tool execution on top of Spring Boot.
+    </description>
 
+    <!-- ====================================================================== -->
+    <!-- Build Properties -->
+    <!-- ====================================================================== -->
     <properties>
+        <!-- Java Version -->
         <java.version>21</java.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Spring Boot -->
         <spring.boot.version>3.5.6</spring.boot.version>
 
-        <!-- OTel -->
+        <!-- OpenTelemetry -->
         <opentelemetry.version>1.57.0</opentelemetry.version>
 
         <!-- Lombok -->
         <lombok.version>1.18.36</lombok.version>
     </properties>
 
+    <!-- ====================================================================== -->
+    <!-- Dependency Management (BOMs) -->
+    <!-- ====================================================================== -->
     <dependencyManagement>
         <dependencies>
             <!-- Spring Boot BOM -->
@@ -42,18 +67,35 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!-- Log4j BOM -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-bom</artifactId>
+                <version>2.25.3</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
+    <!-- ====================================================================== -->
+    <!-- Dependencies -->
+    <!-- ====================================================================== -->
     <dependencies>
-        <!-- Synaptra Log Lib -->
+
+        <!-- =============================================================== -->
+        <!-- Internal Synaptra Libraries -->
+        <!-- =============================================================== -->
         <dependency>
             <groupId>com.ducks.synaptra</groupId>
             <artifactId>synaptra-ai-log-lib</artifactId>
             <version>1.0.0</version>
         </dependency>
 
-        <!-- Spring -->
+        <!-- =============================================================== -->
+        <!-- Spring Framework -->
+        <!-- =============================================================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -64,7 +106,54 @@
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
-        <!-- Lombok -->
+        <!-- =============================================================== -->
+        <!-- Logging -->
+        <!-- =============================================================== -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+        </dependency>
+
+        <!-- =============================================================== -->
+        <!-- Distributed Tracing -->
+        <!-- =============================================================== -->
+        <!-- Micrometer bridge (kept here because the lib propagates context) -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
+        </dependency>
+
+        <!-- OpenTelemetry API & Context -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-context</artifactId>
+        </dependency>
+
+        <!-- =============================================================== -->
+        <!-- Template Engine -->
+        <!-- =============================================================== -->
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity-engine-core</artifactId>
+            <version>2.3</version>
+        </dependency>
+
+        <!-- =============================================================== -->
+        <!-- JSON -->
+        <!-- =============================================================== -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- =============================================================== -->
+        <!-- Utilities -->
+        <!-- =============================================================== -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -72,52 +161,30 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- OpenTelemetry API (ideal para LIB) -->
-        <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-context</artifactId>
-        </dependency>
-
-        <!-- Micrometer bridge (opcional na lib; muitas vezes melhor ficar só no APP) -->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-tracing-bridge-otel</artifactId>
-        </dependency>
-
-        <!-- Exporter OTLP (normalmente fica no APP; mas se sua lib vai exportar, mantenha) -->
-        <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-exporter-otlp</artifactId>
-        </dependency>
-
-        <!-- Velocity -->
-        <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity-engine-core</artifactId>
-            <version>2.3</version>
-        </dependency>
-
+        <!-- =============================================================== -->
         <!-- Test -->
+        <!-- =============================================================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
+    <!-- ====================================================================== -->
+    <!-- Build Configuration -->
+    <!-- ====================================================================== -->
     <build>
         <plugins>
+
+            <!-- =========================================================== -->
+            <!-- Maven Compiler Plugin -->
+            <!-- =========================================================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -128,11 +195,15 @@
                 </configuration>
             </plugin>
 
+            <!-- =========================================================== -->
+            <!-- Spring Boot Maven Plugin -->
+            <!-- =========================================================== -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.2</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
         </plugins>
     </build>
+
 </project>
