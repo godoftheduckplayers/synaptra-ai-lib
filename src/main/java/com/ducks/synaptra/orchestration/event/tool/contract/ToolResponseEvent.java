@@ -1,47 +1,36 @@
 package com.ducks.synaptra.orchestration.event.tool.contract;
 
 import com.ducks.synaptra.agent.Agent;
-import com.ducks.synaptra.client.openai.data.ChatCompletionResponse;
 import com.ducks.synaptra.client.openai.data.Message;
 import com.ducks.synaptra.client.openai.data.ToolCall;
 import org.springframework.lang.Nullable;
 
 /**
- * Event representing the result of an {@link Agent} execution.
+ * Event representing a tool call requested by an agent.
  *
- * <p>This event is published after an agent has completed a chat completion request and produced a
- * {@link ChatCompletionResponse}. It serves as the terminal or intermediate output of an agent
- * execution and may be consumed by orchestrators, supervisors, or response delivery components.
+ * <p>This event is published when an agent execution produces a tool call that must be handled by
+ * the orchestration layer. It represents the handoff between the agent reasoning phase and the tool
+ * execution phase.
  *
- * <p>An {@code AgentExecutionResponseEvent} may be published:
+ * <p>{@code ToolResponseEvent} does <strong>not</strong> represent the final result of a tool
+ * execution. Instead, it carries the {@link ToolCall} definition produced by the agent, which must
+ * be interpreted and executed by {@link
+ * com.ducks.synaptra.orchestration.event.tool.ToolExecutionListener} implementations.
  *
- * <ul>
- *   <li>As the final response to a user interaction
- *   <li>As an intermediate response in a multi-agent or multi-step orchestration flow
- *   <li>In reaction to tool execution results or agent coordination logic
- * </ul>
- *
- * <p>The event optionally carries:
+ * <p>Typical consumers of this event include:
  *
  * <ul>
- *   <li>The {@link Agent} that produced the response
- *   <li>The original {@link Message} representing the user input
+ *   <li>Internal orchestration handlers (routing, record persistence)
+ *   <li>External tool executors (database access, API calls, file processing, etc.)
  * </ul>
  *
- * <p>Both {@code agent} and {@code user} are nullable to support:
+ * <p>The {@code agent} and {@code user} fields are nullable to support supervisor agents,
+ * multi-stage orchestration, or delayed attribution.
  *
- * <ul>
- *   <li>Deferred agent attribution
- *   <li>Supervisor or aggregator agents
- *   <li>Event propagation across multiple orchestration stages
- * </ul>
- *
- * <p>The {@link ChatCompletionResponse} is mandatory and represents the raw response returned by
- * the AI provider.
- *
- * @param agent the agent that produced the response, or {@code null} if not applicable
+ * @param sessionId the unique identifier of the execution session
+ * @param agent the agent that requested the tool call, or {@code null} if not applicable
  * @param user the original user message associated with this execution, or {@code null}
- * @param chatCompletionResponse the chat completion response returned by the AI provider
+ * @param toolCall the tool call produced by the agent (required)
  * @author Leandro Marques
  * @since 1.0.0
  */

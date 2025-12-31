@@ -20,21 +20,68 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+/**
+ * Event-driven component responsible for executing an AI agent request by calling OpenAI and
+ * publishing the corresponding response event.
+ *
+ * <p>This service listens for {@link AgentRequestEvent} events, builds the {@link
+ * ChatCompletionRequest} (including template rendering), performs the OpenAI call through {@link
+ * OpenAIClient}, and then publishes an {@link AgentResponseEvent} so downstream components can
+ * handle the agent execution result.
+ *
+ * <p>Tracing and structured logs are emitted for observability:
+ *
+ * <ul>
+ *   <li>OpenTelemetry/Micrometer spans are created for the OpenAI call boundary
+ *   <li>Span events are added with session/agent identifiers and request/response payloads
+ *   <li>Debug logs include request/response JSON for inspection (use with care in production)
+ * </ul>
+ *
+ * <p><strong>Responsibility boundary:</strong> This class only orchestrates the OpenAI call and
+ * event publication. It does not interpret responses or apply business rules; such processing is
+ * delegated to {@link AgentExecutionListener} implementations, triggered by {@link
+ * AgentResponseEvent}.
+ *
+ * @author Leandro Marques
+ * @version 1.0.0
+ */
 @Service
 public class AgentExecutionEvent {
 
   private static final Logger logger = LogManager.getLogger(AgentExecutionEvent.class);
 
-  /** Service for managing OpenTelemetry spans. */
+  /**
+   * Suggested log/tracing names (better semantics):
+   *
+   * <ul>
+   *   <li>{@code agent_request_received} - when a request event is received
+   *   <li>{@code openai_call_started} - before calling OpenAI
+   *   <li>{@code openai_call_succeeded} - after receiving OpenAI response
+   *   <li>{@code openai_call_failed} - if OpenAI call throws
+   *   <li>{@code agent_response_published} - after publishing response event
+   *   <li>{@code agent_response_dispatched} - when listeners are notified
+   * </ul>
+   */
+
+  /** Service for creating/ending spans and adding span events for observability. */
   private final SpanManager spanManager;
 
   /** Tracer for managing span scope. */
   private final Tracer tracer;
 
+  /** Client responsible for performing OpenAI chat completion calls. */
   private final OpenAIClient openAIClient;
+
+  /** JSON mapper used to serialize request/response payloads for logs and span events. */
   private final ObjectMapper mapper;
+
+  /** Publisher used to emit downstream orchestration events. */
   private final ApplicationEventPublisher publisher;
+
+  /** Subscribers that will process the agent response event. */
   private final List<AgentExecutionListener> agentExecutionListenerList;
+
+  /** Service used to render templates that can compose the final prompt/context. */
   private final VelocityTemplateService velocityTemplateService;
 
   public AgentExecutionEvent(
@@ -53,21 +100,38 @@ public class AgentExecutionEvent {
     this.mapper = new ObjectMapper();
   }
 
-  @LogTracer(spanName = "agent_request_event")
+  /**
+   * Consumes an {@link AgentRequestEvent}, calls OpenAI, and publishes an {@link
+   * AgentResponseEvent}.
+   *
+   * <p>This listener is asynchronous and runs on the {@code agentExecutionExecutor} thread pool. A
+   * dedicated span is created around the OpenAI call to capture timing and important attributes.
+   *
+   * @param agentRequestEvent the agent request event containing session id, agent configuration and
+   *     context messages
+   * @throws JsonProcessingException if request/response payload serialization fails for
+   *     logging/tracing
+   */
+  @LogTracer(spanName = "agent_request_received")
   @Async("agentExecutionExecutor")
   @EventListener
   public void callAgentExecutionEvent(AgentRequestEvent agentRequestEvent)
       throws JsonProcessingException {
-    Span span = spanManager.createSpan("call_openai");
+
+    // Span name suggestion: "openai_chat_completion" (more specific than "call_openai")
+    Span span = spanManager.createSpan("openai_chat_completion");
 
     try (Tracer.SpanInScope ignored = tracer.withSpan(span)) {
       logAgentExecutionRequest(agentRequestEvent, span);
+
       ChatCompletionRequest chatCompletionRequest =
           agentRequestEvent.toChatCompletionRequest(velocityTemplateService);
+
       logChatCompletionRequest(agentRequestEvent, chatCompletionRequest, span);
 
       ChatCompletionResponse chatCompletionResponse =
           openAIClient.call(agentRequestEvent.sessionId(), chatCompletionRequest);
+
       logChatCompletionResponse(agentRequestEvent, chatCompletionResponse, span);
 
       publisher.publishEvent(
@@ -76,57 +140,82 @@ public class AgentExecutionEvent {
               agentRequestEvent.agent(),
               agentRequestEvent.user(),
               chatCompletionResponse));
+
+      spanManager.addEvent(span, "agent_response_published");
+    } catch (Exception ex) {
+      spanManager.addEvent(span, "openai_call_failed: " + ex.getClass().getSimpleName());
+      throw ex;
     } finally {
       spanManager.endSpan(span);
     }
   }
 
-  @LogTracer(spanName = "agent_response_event")
+  /**
+   * Dispatches {@link AgentResponseEvent} to all registered {@link AgentExecutionListener}s.
+   *
+   * <p>This listener is asynchronous and runs on the {@code agentExecutionExecutor} thread pool. It
+   * does not mutate the event; it simply forwards it to downstream processors.
+   *
+   * @param agentResponseEvent the OpenAI result wrapped as an orchestration response event
+   */
+  @LogTracer(spanName = "agent_response_dispatched")
   @Async("agentExecutionExecutor")
   @EventListener
   public void onAgentExecutionEvent(AgentResponseEvent agentResponseEvent) {
-    assert agentResponseEvent.agent() != null;
-    logger.debug(
-        "[AGENT_RESPONSE_EVENT] - sessionId: {}, agent: {}",
-        agentResponseEvent.sessionId(),
-        agentResponseEvent.agent().identifier());
     agentExecutionListenerList.forEach(
         listener -> listener.onAgentResponseEvent(agentResponseEvent));
   }
 
   private void logAgentExecutionRequest(AgentRequestEvent agentRequestEvent, Span span) {
     assert agentRequestEvent.agent() != null;
+
+    spanManager.addEvent(span, "agent_request_received");
+    spanManager.addEvent(span, "session_id: " + agentRequestEvent.sessionId());
+    spanManager.addEvent(span, "agent_id: " + agentRequestEvent.agent().identifier());
+
     logger.debug(
-        "[AGENT_REQUEST_EVENT] - sessionId: {}, agent: {}",
+        "[agent-exec] agent_request_received - sessionId: {}, agent: {}",
         agentRequestEvent.sessionId(),
         agentRequestEvent.agent().identifier());
-    spanManager.addEvent(span, "sessionId: " + agentRequestEvent.sessionId());
-    spanManager.addEvent(span, "agent: " + agentRequestEvent.agent().identifier());
-  }
-
-  private void logChatCompletionResponse(
-      AgentRequestEvent agentRequestEvent, ChatCompletionResponse chatCompletionResponse, Span span)
-      throws JsonProcessingException {
-    assert agentRequestEvent.agent() != null;
-    String chatCompletionResponseJson = mapper.writeValueAsString(chatCompletionResponse);
-    logger.debug(
-        "[OPENAI] - sessionId: {}, agent: {}, response: {}",
-        agentRequestEvent.sessionId(),
-        agentRequestEvent.agent().identifier(),
-        chatCompletionResponseJson);
-    spanManager.addEvent(span, "openai-response: " + chatCompletionResponseJson);
   }
 
   private void logChatCompletionRequest(
       AgentRequestEvent agentRequestEvent, ChatCompletionRequest chatCompletionRequest, Span span)
       throws JsonProcessingException {
+
     assert agentRequestEvent.agent() != null;
+
     String chatCompletionRequestJson = mapper.writeValueAsString(chatCompletionRequest);
+
+    // Suggested log name: "[openai] chat_completion_request"
     logger.debug(
-        "[OPENAI] - sessionId: {}, agent: {}, request: {}",
+        "[openai] chat_completion_request - sessionId: {}, agent: {}, payload: {}",
         agentRequestEvent.sessionId(),
         agentRequestEvent.agent().identifier(),
         chatCompletionRequestJson);
-    spanManager.addEvent(span, "openai-request: " + chatCompletionRequestJson);
+
+    // Suggested span event name: "openai_call_started"
+    spanManager.addEvent(span, "openai_call_started");
+    spanManager.addEvent(span, "openai_request: " + chatCompletionRequestJson);
+  }
+
+  private void logChatCompletionResponse(
+      AgentRequestEvent agentRequestEvent, ChatCompletionResponse chatCompletionResponse, Span span)
+      throws JsonProcessingException {
+
+    assert agentRequestEvent.agent() != null;
+
+    String chatCompletionResponseJson = mapper.writeValueAsString(chatCompletionResponse);
+
+    // Suggested log name: "[openai] chat_completion_response"
+    logger.debug(
+        "[openai] chat_completion_response - sessionId: {}, agent: {}, payload: {}",
+        agentRequestEvent.sessionId(),
+        agentRequestEvent.agent().identifier(),
+        chatCompletionResponseJson);
+
+    // Suggested span event name: "openai_call_succeeded"
+    spanManager.addEvent(span, "openai_call_succeeded");
+    spanManager.addEvent(span, "openai_response: " + chatCompletionResponseJson);
   }
 }

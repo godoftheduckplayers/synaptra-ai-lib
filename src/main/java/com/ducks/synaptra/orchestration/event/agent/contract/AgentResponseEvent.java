@@ -6,41 +6,29 @@ import com.ducks.synaptra.client.openai.data.Message;
 import org.springframework.lang.Nullable;
 
 /**
- * Event representing the result of an {@link Agent} execution.
+ * Event published after an {@link Agent} execution completes and a {@link ChatCompletionResponse}
+ * is produced.
  *
- * <p>This event is published after an agent has completed a chat completion request and produced a
- * {@link ChatCompletionResponse}. It serves as the terminal or intermediate output of an agent
- * execution and may be consumed by orchestrators, supervisors, or response delivery components.
+ * <p>This event represents the output of an agent execution cycle, carrying the raw response
+ * returned by the AI provider. It can be consumed by orchestrators, supervisors, listeners, or
+ * delivery components responsible for routing, persistence, post-processing, or user-facing output.
  *
- * <p>An {@code AgentExecutionResponseEvent} may be published:
- *
- * <ul>
- *   <li>As the final response to a user interaction
- *   <li>As an intermediate response in a multi-agent or multi-step orchestration flow
- *   <li>In reaction to tool execution results or agent coordination logic
- * </ul>
- *
- * <p>The event optionally carries:
+ * <p>Typical publishing scenarios include:
  *
  * <ul>
- *   <li>The {@link Agent} that produced the response
- *   <li>The original {@link Message} representing the user input
+ *   <li>Final response generation for a user interaction
+ *   <li>Intermediate response propagation in multi-agent flows
+ *   <li>Follow-up processing after tool execution or orchestration steps
  * </ul>
  *
- * <p>Both {@code agent} and {@code user} are nullable to support:
+ * <p>{@code agent} and {@code user} are nullable to support flows where attribution or the original
+ * input message may be deferred, enriched later, or not applicable (e.g., supervisor aggregation).
  *
- * <ul>
- *   <li>Deferred agent attribution
- *   <li>Supervisor or aggregator agents
- *   <li>Event propagation across multiple orchestration stages
- * </ul>
- *
- * <p>The {@link ChatCompletionResponse} is mandatory and represents the raw response returned by
- * the AI provider.
- *
+ * @param sessionId the unique identifier of the execution session
  * @param agent the agent that produced the response, or {@code null} if not applicable
- * @param user the original user message associated with this execution, or {@code null}
- * @param chatCompletionResponse the chat completion response returned by the AI provider
+ * @param user the original user message associated with this execution, or {@code null} if not
+ *     available
+ * @param chatCompletionResponse the chat completion response returned by the AI provider (required)
  * @author Leandro Marques
  * @since 1.0.0
  */
