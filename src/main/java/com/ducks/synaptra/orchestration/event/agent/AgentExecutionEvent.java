@@ -50,19 +50,6 @@ public class AgentExecutionEvent {
 
   private static final Logger logger = LogManager.getLogger(AgentExecutionEvent.class);
 
-  /**
-   * Suggested log/tracing names (better semantics):
-   *
-   * <ul>
-   *   <li>{@code agent_request_received} - when a request event is received
-   *   <li>{@code openai_call_started} - before calling OpenAI
-   *   <li>{@code openai_call_succeeded} - after receiving OpenAI response
-   *   <li>{@code openai_call_failed} - if OpenAI call throws
-   *   <li>{@code agent_response_published} - after publishing response event
-   *   <li>{@code agent_response_dispatched} - when listeners are notified
-   * </ul>
-   */
-
   /** Service for creating/ending spans and adding span events for observability. */
   private final SpanManager spanManager;
 
