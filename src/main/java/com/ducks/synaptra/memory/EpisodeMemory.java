@@ -22,7 +22,7 @@ import org.springframework.util.Assert;
  *
  * <ul>
  *   <li>Keyed by {@code sessionId}
- *   <li>Inside each session, keyed by {@code agent.identifier()}
+ *   <li>Inside each session, keyed by {@code agent.getIdentifier()}
  *   <li>Each agent key maps to an append-only {@link List} of {@link RecordEvent}
  * </ul>
  *
@@ -104,7 +104,7 @@ public class EpisodeMemory {
     Assert.notNull(agent, "agent must not be null");
     Assert.notNull(events, "events must not be null");
 
-    return events.computeIfAbsent(agent.identifier(), key -> new ArrayList<>());
+    return events.computeIfAbsent(agent.getIdentifier(), key -> new ArrayList<>());
   }
 
   private Map<String, List<RecordEvent>> getOrCreateSessionEvents(String sessionId) {

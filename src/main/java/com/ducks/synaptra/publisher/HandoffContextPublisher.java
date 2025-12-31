@@ -118,7 +118,7 @@ public class HandoffContextPublisher {
           toolResponseEvent.sessionId(),
           toolResponseEvent.agent(),
           new RecordEvent(
-              "Waiting for agent execution: " + targetAgent.name(), WAIT_AGENT_EXECUTION));
+              "Waiting for agent execution: " + targetAgent.getName(), WAIT_AGENT_EXECUTION));
 
       Message handoffContext =
           new Message(
@@ -154,8 +154,8 @@ public class HandoffContextPublisher {
     assert toolResponseEvent.agent() != null;
 
     Optional<Agent> agent =
-        toolResponseEvent.agent().agents().stream()
-            .filter(a -> a.name().equals(routeMapper.agent()))
+        toolResponseEvent.agent().getAgents().stream()
+            .filter(a -> a.getName().equals(routeMapper.agent()))
             .findFirst();
 
     return agent.orElseThrow(

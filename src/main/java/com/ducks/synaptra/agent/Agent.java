@@ -2,6 +2,7 @@ package com.ducks.synaptra.agent;
 
 import com.ducks.synaptra.client.openai.data.Tool;
 import com.ducks.synaptra.client.openai.data.ToolChoice;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Map;
 
@@ -42,13 +43,13 @@ public interface Agent {
    *
    * @return a unique, non-null identifier for this agent
    */
-  String identifier();
+  String getIdentifier();
 
-  String name();
+  String getName();
 
-  String goal();
+  String getGoal();
 
-  AgentType agentType();
+  AgentType getAgentType();
 
   /**
    * Returns the configuration of the AI provider used by this agent.
@@ -58,7 +59,7 @@ public interface Agent {
    *
    * @return the provider configuration associated with this agent
    */
-  ProviderConfig providerConfig();
+  ProviderConfig getProviderConfig();
 
   /**
    * Returns the base prompt that defines the agent's behavior and context.
@@ -68,7 +69,7 @@ public interface Agent {
    *
    * @return the agent's base prompt
    */
-  String prompt();
+  String getPrompt();
 
   /**
    * Returns the list of callable tools available to the agent.
@@ -78,13 +79,16 @@ public interface Agent {
    *
    * @return the list of tools available to the agent
    */
-  List<Tool> tools();
+  @JsonIgnore
+  List<Tool> getTools();
 
-  Agent parent();
+  @JsonIgnore
+  Agent getParent();
 
   void setParent(Agent agent);
 
-  List<Agent> agents();
+  @JsonIgnore
+  List<Agent> getAgents();
 
   /**
    * Defines how the model should choose and invoke tools during execution.
@@ -94,7 +98,8 @@ public interface Agent {
    *
    * @return the tool selection strategy for this agent
    */
-  ToolChoice toolChoice();
+  ToolChoice getToolChoice();
 
-  Map<String, Object> velocityContext();
+  @JsonIgnore
+  Map<String, Object> getVelocityContext();
 }

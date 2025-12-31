@@ -98,7 +98,7 @@ public class RecordExecutionEvent {
           logger.debug(
               "[RECORD_EVENT_IGNORED] sessionId={}, agent={}, status={}",
               recordRequestEvent.sessionId(),
-              recordRequestEvent.agent().identifier(),
+              recordRequestEvent.agent().getIdentifier(),
               status);
     }
   }
@@ -112,7 +112,7 @@ public class RecordExecutionEvent {
 
   private void handleAgentFinished(RecordRequestEvent recordRequestEvent) {
     assert recordRequestEvent.agent() != null;
-    if (recordRequestEvent.agent().parent() == null) {
+    if (recordRequestEvent.agent().getParent() == null) {
       // Leaf agent finished and there is no parent to resume -> deliver final answer to user.
       publishAnswerFromRecord(recordRequestEvent);
       return;
@@ -139,7 +139,7 @@ public class RecordExecutionEvent {
     publisher.publishEvent(
         new AgentRequestEvent(
             recordRequestEvent.sessionId(),
-            recordRequestEvent.agent().parent(),
+            recordRequestEvent.agent().getParent(),
             handoffContext,
             parentEpisodicContext,
             recordRequestEvent.user()));
@@ -151,7 +151,7 @@ public class RecordExecutionEvent {
     publisher.publishEvent(
         new AgentRequestEvent(
             recordRequestEvent.sessionId(),
-            recordRequestEvent.agent().parent(),
+            recordRequestEvent.agent().getParent(),
             new Message("system", recordRequestEvent.recordEvent().content(), null, null, null),
             null,
             recordRequestEvent.user()));
@@ -174,7 +174,7 @@ public class RecordExecutionEvent {
     assert recordRequestEvent.agent() != null;
     List<RecordEvent> parentRecords =
         episodeMemory.getEpisodeMemory(
-            recordRequestEvent.sessionId(), recordRequestEvent.agent().parent());
+            recordRequestEvent.sessionId(), recordRequestEvent.agent().getParent());
 
     if (CollectionUtils.isEmpty(parentRecords)) {
       return null;
@@ -198,7 +198,7 @@ public class RecordExecutionEvent {
             #end
 
             Child completion:
-            - The agent '$agent.name()' has finished. Summary: $content
+            - The agent '$agent.getName()' has finished. Summary: $content
 
             Constraints:
             - Do not repeat previously asked questions.

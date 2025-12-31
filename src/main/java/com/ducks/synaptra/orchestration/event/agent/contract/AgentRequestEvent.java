@@ -107,7 +107,7 @@ public record AgentRequestEvent(
     messageList.add(
         new Message(
             "system",
-            velocityTemplateService.render(agent.prompt(), agent.velocityContext()),
+            velocityTemplateService.render(agent.getPrompt(), agent.getVelocityContext()),
             null,
             null,
             null));
@@ -126,12 +126,12 @@ public record AgentRequestEvent(
     messageList.add(user);
 
     return new ChatCompletionRequest(
-        agent.providerConfig().model(),
+        agent.getProviderConfig().model(),
         messageList,
-        agent.tools(),
-        agent.toolChoice().getValue(),
-        agent.providerConfig().temperature(),
-        agent.providerConfig().maxTokens(),
-        agent.providerConfig().topP());
+        agent.getTools(),
+        agent.getToolChoice().getValue(),
+        agent.getProviderConfig().temperature(),
+        agent.getProviderConfig().maxTokens(),
+        agent.getProviderConfig().topP());
   }
 }

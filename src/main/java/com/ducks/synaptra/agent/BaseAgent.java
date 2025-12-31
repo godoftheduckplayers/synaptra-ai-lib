@@ -14,20 +14,21 @@ public abstract class BaseAgent implements Agent {
   private Agent parent;
 
   @Override
-  public List<Tool> tools() {
+  public List<Tool> getTools() {
     List<Tool> tools = new ArrayList<>();
-    if (agents() != null && !agents().isEmpty()) {
+    if (getAgents() != null && !getAgents().isEmpty()) {
       tools.add(routeToAgentFunction());
     }
     tools.add(stageTool());
     return tools;
   }
 
-  public Map<String, Object> velocityContext() {
+  @Override
+  public Map<String, Object> getVelocityContext() {
     Map<String, Object> context = new HashMap<>();
-    context.put("name", name());
-    context.put("goal", goal());
-    context.put("agents", agents());
+    context.put("name", getName());
+    context.put("goal", getGoal());
+    context.put("agents", getAgents());
     return context;
   }
 
@@ -104,7 +105,7 @@ public abstract class BaseAgent implements Agent {
   }
 
   @Override
-  public Agent parent() {
+  public Agent getParent() {
     return parent;
   }
 

@@ -95,7 +95,7 @@ public class OrchestrationExecutionService {
                   "[TOOL_CALL_REQUESTED] sessionId={}, agent={}, tool={}",
                   agentResponseEvent.sessionId(),
                   agentResponseEvent.agent() != null
-                      ? agentResponseEvent.agent().identifier()
+                      ? agentResponseEvent.agent().getIdentifier()
                       : "null",
                   toolCall.function().name());
 
@@ -118,7 +118,7 @@ public class OrchestrationExecutionService {
     logger.debug(
         "[ANSWER_EMITTED] sessionId={}, agent={}, contentLength={}",
         agentResponseEvent.sessionId(),
-        agentResponseEvent.agent() != null ? agentResponseEvent.agent().identifier() : "null",
+        agentResponseEvent.agent() != null ? agentResponseEvent.agent().getIdentifier() : "null",
         content.length());
 
     publisher.publishEvent(

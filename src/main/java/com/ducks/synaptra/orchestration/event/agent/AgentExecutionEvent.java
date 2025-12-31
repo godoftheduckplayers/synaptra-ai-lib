@@ -158,12 +158,12 @@ public class AgentExecutionEvent {
 
     spanManager.addEvent(span, "agent_request_received");
     spanManager.addEvent(span, "session_id: " + agentRequestEvent.sessionId());
-    spanManager.addEvent(span, "agent_id: " + agentRequestEvent.agent().identifier());
+    spanManager.addEvent(span, "agent_id: " + agentRequestEvent.agent().getIdentifier());
 
     logger.debug(
         "[agent-exec] agent_request_received - sessionId: {}, agent: {}",
         agentRequestEvent.sessionId(),
-        agentRequestEvent.agent().identifier());
+        agentRequestEvent.agent().getIdentifier());
   }
 
   private void logChatCompletionRequest(
@@ -178,7 +178,7 @@ public class AgentExecutionEvent {
     logger.debug(
         "[openai] chat_completion_request - sessionId: {}, agent: {}, payload: {}",
         agentRequestEvent.sessionId(),
-        agentRequestEvent.agent().identifier(),
+        agentRequestEvent.agent().getIdentifier(),
         chatCompletionRequestJson);
 
     // Suggested span event name: "openai_call_started"
@@ -198,7 +198,7 @@ public class AgentExecutionEvent {
     logger.debug(
         "[openai] chat_completion_response - sessionId: {}, agent: {}, payload: {}",
         agentRequestEvent.sessionId(),
-        agentRequestEvent.agent().identifier(),
+        agentRequestEvent.agent().getIdentifier(),
         chatCompletionResponseJson);
 
     // Suggested span event name: "openai_call_succeeded"
