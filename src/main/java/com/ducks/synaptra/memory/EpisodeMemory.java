@@ -2,7 +2,7 @@ package com.ducks.synaptra.memory;
 
 import com.ducks.synaptra.agent.Agent;
 import com.ducks.synaptra.log.LogTracer;
-import com.ducks.synaptra.prompt.contract.RecordEvent;
+import com.ducks.synaptra.publisher.contract.RecordEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.ducks.synaptra.prompt;
+package com.ducks.synaptra.publisher;
 
 import static com.ducks.synaptra.orchestration.event.record.RecordExecutionEvent.WAIT_AGENT_EXECUTION;
 
@@ -8,8 +8,8 @@ import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.memory.EpisodeMemory;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentRequestEvent;
 import com.ducks.synaptra.orchestration.event.tool.contract.ToolResponseEvent;
-import com.ducks.synaptra.prompt.contract.RecordEvent;
-import com.ducks.synaptra.prompt.contract.RouteMapper;
+import com.ducks.synaptra.publisher.contract.RecordEvent;
+import com.ducks.synaptra.publisher.contract.RouteMapper;
 import com.ducks.synaptra.velocity.VelocityTemplateService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

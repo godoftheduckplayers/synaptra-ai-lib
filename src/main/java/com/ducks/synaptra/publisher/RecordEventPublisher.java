@@ -1,9 +1,9 @@
-package com.ducks.synaptra.prompt;
+package com.ducks.synaptra.publisher;
 
 import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.orchestration.event.record.contract.RecordRequestEvent;
 import com.ducks.synaptra.orchestration.event.tool.contract.ToolResponseEvent;
-import com.ducks.synaptra.prompt.contract.RecordEvent;
+import com.ducks.synaptra.publisher.contract.RecordEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.ApplicationEventPublisher;

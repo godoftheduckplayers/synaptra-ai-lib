@@ -1,11 +1,11 @@
-package com.ducks.synaptra.prompt;
+package com.ducks.synaptra.publisher;
 
 import com.ducks.synaptra.agent.Agent;
 import com.ducks.synaptra.client.openai.data.Message;
 import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.memory.EpisodeMemory;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentRequestEvent;
-import com.ducks.synaptra.prompt.contract.RecordEvent;
+import com.ducks.synaptra.publisher.contract.RecordEvent;
 import com.ducks.synaptra.velocity.VelocityTemplateService;
 import java.util.HashMap;
 import java.util.List;

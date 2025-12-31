@@ -1,4 +1,4 @@
-package com.ducks.synaptra.prompt.contract;
+package com.ducks.synaptra.publisher.contract;
 
 import java.util.HashMap;
 import java.util.Map;

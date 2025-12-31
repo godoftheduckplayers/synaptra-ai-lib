@@ -6,7 +6,7 @@ import com.ducks.synaptra.memory.EpisodeMemory;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentRequestEvent;
 import com.ducks.synaptra.orchestration.event.answer.contract.AnswerResponseEvent;
 import com.ducks.synaptra.orchestration.event.record.contract.RecordRequestEvent;
-import com.ducks.synaptra.prompt.contract.RecordEvent;
+import com.ducks.synaptra.publisher.contract.RecordEvent;
 import com.ducks.synaptra.velocity.VelocityTemplateService;
 import java.util.HashMap;
 import java.util.List;
