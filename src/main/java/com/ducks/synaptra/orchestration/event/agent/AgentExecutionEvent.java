@@ -4,16 +4,17 @@ import com.ducks.synaptra.client.openai.OpenAIClient;
 import com.ducks.synaptra.client.openai.data.ChatCompletionRequest;
 import com.ducks.synaptra.client.openai.data.ChatCompletionResponse;
 import com.ducks.synaptra.log.LogTracer;
+import com.ducks.synaptra.log.tracing.SpanManager;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentRequestEvent;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentResponseEvent;
 import com.ducks.synaptra.velocity.VelocityTemplateService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -22,9 +23,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class AgentExecutionEvent {
 
-  private static final Logger logger = LoggerFactory.getLogger(AgentExecutionEvent.class);
+  private static final Logger logger = LogManager.getLogger(AgentExecutionEvent.class);
 
+  /** Service for managing OpenTelemetry spans. */
+  private final SpanManager spanManager;
+
+  /** Tracer for managing span scope. */
   private final Tracer tracer;
+
   private final OpenAIClient openAIClient;
   private final ObjectMapper mapper;
   private final ApplicationEventPublisher publisher;
@@ -32,11 +38,13 @@ public class AgentExecutionEvent {
   private final VelocityTemplateService velocityTemplateService;
 
   public AgentExecutionEvent(
+      SpanManager spanManager,
       Tracer tracer,
       OpenAIClient openAIClient,
       ApplicationEventPublisher publisher,
       List<AgentExecutionListener> agentExecutionListenerList,
       VelocityTemplateService velocityTemplateService) {
+    this.spanManager = spanManager;
     this.tracer = tracer;
     this.openAIClient = openAIClient;
     this.publisher = publisher;
@@ -50,22 +58,27 @@ public class AgentExecutionEvent {
   @EventListener
   public void callAgentExecutionEvent(AgentRequestEvent agentRequestEvent)
       throws JsonProcessingException {
-    Span span = tracer.spanBuilder("call-openai").startSpan();
-    logAgentExecutionRequest(agentRequestEvent, span);
-    ChatCompletionRequest chatCompletionRequest =
-        agentRequestEvent.toChatCompletionRequest(velocityTemplateService);
-    logChatCompletionRequest(agentRequestEvent, chatCompletionRequest, span);
+    Span span = spanManager.createSpan("call_openai");
 
-    ChatCompletionResponse chatCompletionResponse =
-        openAIClient.call(agentRequestEvent.sessionId(), chatCompletionRequest);
-    logChatCompletionResponse(agentRequestEvent, chatCompletionResponse, span);
+    try (Tracer.SpanInScope ignored = tracer.withSpan(span)) {
+      logAgentExecutionRequest(agentRequestEvent, span);
+      ChatCompletionRequest chatCompletionRequest =
+          agentRequestEvent.toChatCompletionRequest(velocityTemplateService);
+      logChatCompletionRequest(agentRequestEvent, chatCompletionRequest, span);
 
-    publisher.publishEvent(
-        new AgentResponseEvent(
-            agentRequestEvent.sessionId(),
-            agentRequestEvent.agent(),
-            agentRequestEvent.user(),
-            chatCompletionResponse));
+      ChatCompletionResponse chatCompletionResponse =
+          openAIClient.call(agentRequestEvent.sessionId(), chatCompletionRequest);
+      logChatCompletionResponse(agentRequestEvent, chatCompletionResponse, span);
+
+      publisher.publishEvent(
+          new AgentResponseEvent(
+              agentRequestEvent.sessionId(),
+              agentRequestEvent.agent(),
+              agentRequestEvent.user(),
+              chatCompletionResponse));
+    } finally {
+      spanManager.endSpan(span);
+    }
   }
 
   @LogTracer(spanName = "agent_response_event")
@@ -87,8 +100,8 @@ public class AgentExecutionEvent {
         "[AGENT_REQUEST_EVENT] - sessionId: {}, agent: {}",
         agentRequestEvent.sessionId(),
         agentRequestEvent.agent().identifier());
-    span.setAttribute("sessionId", agentRequestEvent.sessionId());
-    span.setAttribute("agent", agentRequestEvent.agent().identifier());
+    spanManager.addEvent(span, "sessionId: " + agentRequestEvent.sessionId());
+    spanManager.addEvent(span, "agent: " + agentRequestEvent.agent().identifier());
   }
 
   private void logChatCompletionResponse(
@@ -101,7 +114,7 @@ public class AgentExecutionEvent {
         agentRequestEvent.sessionId(),
         agentRequestEvent.agent().identifier(),
         chatCompletionResponseJson);
-    span.setAttribute("openai-response", chatCompletionResponseJson);
+    spanManager.addEvent(span, "openai-response: " + chatCompletionResponseJson);
   }
 
   private void logChatCompletionRequest(
@@ -114,6 +127,6 @@ public class AgentExecutionEvent {
         agentRequestEvent.sessionId(),
         agentRequestEvent.agent().identifier(),
         chatCompletionRequestJson);
-    span.setAttribute("openai-request", chatCompletionRequestJson);
+    spanManager.addEvent(span, "openai-request: " + chatCompletionRequestJson);
   }
 }
