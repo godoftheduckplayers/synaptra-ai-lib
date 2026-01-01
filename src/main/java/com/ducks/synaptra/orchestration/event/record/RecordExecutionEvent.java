@@ -146,15 +146,7 @@ public class RecordExecutionEvent {
   }
 
   private void handleToolFinished(RecordRequestEvent recordRequestEvent) {
-    // Tool execution ended -> resume parent agent with the tool output as system context.
-    assert recordRequestEvent.agent() != null;
-    publisher.publishEvent(
-        new AgentRequestEvent(
-            recordRequestEvent.sessionId(),
-            recordRequestEvent.agent().getParent(),
-            new Message("system", recordRequestEvent.recordEvent().content(), null, null, null),
-            null,
-            recordRequestEvent.user()));
+    registerInEpisodicMemory(recordRequestEvent);
   }
 
   private void publishAnswerFromRecord(RecordRequestEvent recordRequestEvent) {
