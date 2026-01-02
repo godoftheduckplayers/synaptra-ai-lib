@@ -53,6 +53,14 @@ public abstract class BaseAgent implements Agent {
             "string",
             "This field contains the user-provided data or contextual information that the target agent will process in order to fulfill the objective."),
         true);
+    if (isSupportsInterimMessages()) {
+      parameter.addProperty(
+          "response",
+          new ParameterProperty(
+              "string",
+              "Generates an intermediate response during agent routing, informing the user that the system is processing the request and preparing an action based on the user’s input."),
+          true);
+    }
 
     FunctionDef routeToAgentFunction =
         new FunctionDef(
