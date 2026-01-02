@@ -7,6 +7,7 @@ import com.ducks.synaptra.client.openai.data.Message;
 import com.ducks.synaptra.log.LogTracer;
 import com.ducks.synaptra.memory.EpisodeMemory;
 import com.ducks.synaptra.orchestration.event.agent.contract.AgentRequestEvent;
+import com.ducks.synaptra.orchestration.event.answer.contract.AnswerResponseEvent;
 import com.ducks.synaptra.orchestration.event.tool.contract.ToolResponseEvent;
 import com.ducks.synaptra.publisher.contract.RecordEvent;
 import com.ducks.synaptra.publisher.contract.RouteMapper;
@@ -103,13 +104,49 @@ public class HandoffContextPublisher {
    * Builds an {@link AgentRequestEvent} from a {@link ToolResponseEvent} produced by a routing
    * tool.
    *
+   * <p>This method parses the routing tool arguments into a {@link RouteMapper}, resolves the
+   * target agent, registers an orchestration step into episodic memory, and finally builds the
+   * handoff system {@link Message} rendered via Velocity before returning the resulting {@link
+   * AgentRequestEvent}.
+   *
+   * <h3>Interim response behavior</h3>
+   *
+   * <p>If the current agent supports interim messages (i.e. {@code
+   * toolResponseEvent.agent().isSupportsInterimMessages()} is {@code true}), this method will
+   * publish an {@link AnswerResponseEvent} <b>before</b> routing to the target agent. The published
+   * message uses {@link RouteMapper#response()} as its content and is intended to provide the user
+   * with a partial/progress update while the orchestration continues asynchronously.
+   *
+   * <p>In this flow, {@link RouteMapper#response()} should contain a short, user-friendly, generic
+   * "waiting/progress" message describing what will be executed next based on the request (without
+   * leaking internal details). If {@code response} is {@code null} or empty, the event may still be
+   * published depending on downstream handling, so producers should ensure a meaningful interim
+   * response when interim messaging is enabled.
+   *
+   * <h3>Episodic memory registration</h3>
+   *
+   * <p>The method registers an orchestration record (e.g. "Waiting for agent execution: X") so
+   * episodic memory accurately reflects that an agent handoff is pending.
+   *
    * @param toolResponseEvent the tool response event containing the routing tool call
-   * @return the constructed {@link AgentRequestEvent}
+   * @return the constructed {@link AgentRequestEvent} to execute the resolved target agent
+   * @throws RuntimeException if the routing tool arguments cannot be parsed into {@link
+   *     RouteMapper}
    */
   private AgentRequestEvent buildAgentRequestEvent(ToolResponseEvent toolResponseEvent) {
     try {
       RouteMapper routeMapper =
           MAPPER.readValue(toolResponseEvent.toolCall().function().arguments(), RouteMapper.class);
+
+      assert toolResponseEvent.agent() != null;
+      if (toolResponseEvent.agent().isSupportsInterimMessages()) {
+        publisher.publishEvent(
+            new AnswerResponseEvent(
+                toolResponseEvent.sessionId(),
+                toolResponseEvent.agent(),
+                toolResponseEvent.user(),
+                routeMapper.response()));
+      }
 
       Agent targetAgent = resolveTargetAgent(routeMapper, toolResponseEvent);
 
